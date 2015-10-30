@@ -105,8 +105,6 @@ public:
 
 		format_desc_	= format_desc;
 		channel_layout_	= channel_layout;
-
-		CASPAR_LOG(info) << print() << L" Successfully Initialized.";
 	}
 
 	std::future<bool> schedule_send(core::const_frame frame)
@@ -140,7 +138,7 @@ public:
 
 		if (executor_.size() > 0 || executor_.is_currently_in_task())
 		{
-			graph_->set_tag("dropped-frame");
+			graph_->set_tag(diagnostics::tag_severity::WARNING, "dropped-frame");
 
 			return make_ready_future(true);
 		}

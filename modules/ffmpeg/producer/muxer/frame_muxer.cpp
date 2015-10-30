@@ -25,6 +25,7 @@
 
 #include "../filter/filter.h"
 #include "../util/util.h"
+#include "../../ffmpeg.h"
 
 #include <core/producer/frame_producer.h>
 #include <core/frame/draw_frame.h>
@@ -123,7 +124,8 @@ struct frame_muxer::impl : boost::noncopyable
 		if (previous_frame_ && video->data[0] && is_frame_format_changed(*previous_frame_, *video))
 		{
 			// Fixes bug where avfilter crashes server on some DV files (starts in YUV420p but changes to YUV411p after the first frame).
-			CASPAR_LOG(info) << L"[frame_muxer] Frame format has changed. Resetting display mode.";
+			if (!ffmpeg::is_logging_disabled_for_thread())
+				CASPAR_LOG(info) << L"[frame_muxer] Frame format has changed. Resetting display mode.";
 			display_mode_ = display_mode::invalid;
 		}
 
@@ -241,7 +243,7 @@ struct frame_muxer::impl : boost::noncopyable
 					auto second_audio_frame = core::mutable_frame(
 							std::vector<array<std::uint8_t>>(),
 							pop_audio(),
-							frame1.data_tag(),
+							frame1.stream_tag(),
 							core::pixel_format_desc(),
 							channel_layout_);
 					auto first_frame = core::draw_frame(std::move(frame1));
@@ -328,7 +330,8 @@ struct frame_muxer::impl : boost::noncopyable
 
 		if(display_mode_ == display_mode::invalid)
 		{
-			CASPAR_LOG(warning) << L"[frame_muxer] Auto-transcode: Failed to detect display-mode.";
+			if (!ffmpeg::is_logging_disabled_for_thread())
+				CASPAR_LOG(warning) << L"[frame_muxer] Auto-transcode: Failed to detect display-mode.";
 			display_mode_ = display_mode::simple;
 		}
 
@@ -348,7 +351,8 @@ struct frame_muxer::impl : boost::noncopyable
 			std::vector<AVPixelFormat>(),
 			u8(filter_str)));
 
-		CASPAR_LOG(info) << L"[frame_muxer] " << display_mode_ << L" " << print_mode(frame->width, frame->height, in_fps_, frame->interlaced_frame > 0);
+		if (!ffmpeg::is_logging_disabled_for_thread())
+			CASPAR_LOG(info) << L"[frame_muxer] " << display_mode_ << L" " << print_mode(frame->width, frame->height, in_fps_, frame->interlaced_frame > 0);
 	}
 	
 	uint32_t calc_nb_frames(uint32_t nb_frames) const

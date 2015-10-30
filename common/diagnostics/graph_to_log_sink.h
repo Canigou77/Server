@@ -16,20 +16,16 @@
 * You should have received a copy of the GNU General Public License
 * along with CasparCG. If not, see <http://www.gnu.org/licenses/>.
 *
-* Author: Robert Nagy, ronag89@gmail.com
+* Author: Helge Norberg, helge.norberg@svt.se
 */
 
 #pragma once
 
-#include <string>
-#include <core/module_dependencies.h>
+#include "../memory.h"
+#include "graph.h"
 
-namespace caspar { namespace ffmpeg {
+namespace caspar { namespace diagnostics {
 
-void init(core::module_dependencies dependencies);
-void uninit();
-void disable_logging_for_thread();
-std::shared_ptr<void> temporary_disable_logging_for_thread(bool disable);
-bool is_logging_disabled_for_thread();
+void register_graph_to_log_sink();
 
 }}

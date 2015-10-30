@@ -24,6 +24,7 @@
 #include "ffmpeg_producer.h"
 
 #include "../ffmpeg_error.h"
+#include "../ffmpeg.h"
 
 #include "muxer/frame_muxer.h"
 #include "input/input.h"
@@ -144,7 +145,8 @@ public:
 			constraints_.width.set(video_decoder_->width());
 			constraints_.height.set(video_decoder_->height());
 			
-			CASPAR_LOG(info) << print() << L" " << video_decoder_->print();
+			if (!is_logging_disabled_for_thread())
+				CASPAR_LOG(info) << print() << L" " << video_decoder_->print();
 		}
 		catch(averror_stream_not_found&)
 		{
@@ -184,7 +186,8 @@ public:
 		
 		decode_next_frame();
 
-		CASPAR_LOG(info) << print() << L" Initialized";
+		if (!is_logging_disabled_for_thread())
+			CASPAR_LOG(info) << print() << L" Initialized";
 	}
 
 	// frame_producer
@@ -204,9 +207,9 @@ public:
 			last_frame_ = frame = std::move(muxer_->front());
 			muxer_->pop();
 		}
-		else
-			graph_->set_tag("underflow");
-									
+		else if (!input_.eof())
+			graph_->set_tag(diagnostics::tag_severity::WARNING, "underflow");
+
 		graph_->set_value("frame-time", frame_timer.elapsed()*format_desc_.fps*0.5);
 		*monitor_subject_
 				<< core::monitor::message("/profiler/time")	% frame_timer.elapsed() % (1.0/format_desc_.fps);			
